@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Platform Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg:               #080c14;
+    --bg-card:          #0f1623;
+    --bg-card-hover:    #161f2e;
+    --bg-section:       #0b1020;
+    --border:           #1c2a3a;
+    --border-mid:       #243447;
+    --border-highlight: #2e4460;
+    --text:             #dde4ef;
+    --text-muted:       #5c7592;
+    --text-dim:         #3d5167;
+
+    --bronze:        #d97706;
+    --bronze-bg:     rgba(217,119,6,0.07);
+    --bronze-border: rgba(217,119,6,0.22);
+
+    --silver:        #94a3b8;
+    --silver-bg:     rgba(148,163,184,0.07);
+    --silver-border: rgba(148,163,184,0.22);
+
+    --gold:        #eab308;
+    --gold-bg:     rgba(234,179,8,0.07);
+    --gold-border: rgba(234,179,8,0.22);
+
+    --green:        #10b981;
+    --green-bg:     rgba(16,185,129,0.07);
+    --green-border: rgba(16,185,129,0.22);
+
+    --event:        #8b5cf6;
+    --event-bg:     rgba(139,92,246,0.07);
+    --event-border: rgba(139,92,246,0.22);
+
+    --alert:        #ef4444;
+    --alert-bg:     rgba(239,68,68,0.07);
+    --alert-border: rgba(239,68,68,0.22);
+
+    --infra:        #06b6d4;
+    --infra-bg:     rgba(6,182,212,0.07);
+    --infra-border: rgba(6,182,212,0.22);
+
+    --quality:        #f59e0b;
+    --quality-bg:     rgba(245,158,11,0.07);
+    --quality-border: rgba(245,158,11,0.22);
+
+    --gdpr:        #ec4899;
+    --gdpr-bg:     rgba(236,72,153,0.07);
+    --gdpr-border: rgba(236,72,153,0.22);
+
+    --radius-sm: 6px;
+    --radius:    10px;
+    --radius-lg: 14px;
+
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.25);
+    --shadow-hover: 0 4px 24px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4);
+
+    --transition: 0.18s ease;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    overflow-x: auto;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── HEADER ──────────────────────────────────────── */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 18px 40px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(8,12,20,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .header-left { display: flex; flex-direction: column; gap: 3px; }
+
+  .header h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    background: linear-gradient(120deg, #dde4ef 30%, #8b5cf6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.2;
+  }
+
+  .header p {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.3px;
+  }
+
+  .header-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--gdpr-border);
+    background: var(--gdpr-bg);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gdpr);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  /* ─── LEGEND ──────────────────────────────────────── */
+  .legend {
+    display: flex;
+    gap: 6px;
+    padding: 10px 40px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    background: var(--bg-section);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted);
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: border-color var(--transition), background var(--transition);
+  }
+
+  .legend-item:hover {
+    border-color: var(--border-mid);
+    background: var(--bg-card);
+  }
+
+  .legend-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .legend-sep {
+    width: 1px;
+    background: var(--border);
+    align-self: stretch;
+    margin: 2px 4px;
+  }
+
+  /* ─── CANVAS ──────────────────────────────────────── */
+  .canvas {
+    padding: 32px 40px;
+    min-width: 1560px;
+    position: relative;
+  }
+
+  .layers {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  .layer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 195px;
+    flex: 1;
+  }
+
+  .layer-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    text-align: center;
+    margin-bottom: 6px;
+  }
+
+  /* ─── NODES ───────────────────────────────────────── */
+  .node {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 13px 15px;
+    background: var(--bg-card);
+    position: relative;
+    transition: background var(--transition), border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+    cursor: default;
+    box-shadow: var(--shadow-card);
+  }
+
+  .node:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-highlight);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  .node-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    line-height: 1.3;
+    color: var(--text);
+  }
+
+  .node-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.55;
+  }
+
+  .node-tag {
+    display: inline-flex;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 3px;
+    margin-top: 8px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+  }
+
+  /* Color variants */
+  .node-source  { border-left: 2px solid var(--text-muted); }
+  .node-event   { border-left: 2px solid var(--event); }
+  .node-bronze  { border-left: 2px solid var(--bronze); }
+  .node-silver  { border-left: 2px solid var(--silver); }
+  .node-gold    { border-left: 2px solid var(--gold); }
+  .node-app     { border-left: 2px solid var(--green); }
+  .node-infra   { border-left: 2px solid var(--infra); }
+  .node-quality { border-left: 2px solid var(--quality); }
+  .node-gdpr    { border-left: 2px solid var(--gdpr); }
+  .node-alert   { border-left: 2px solid var(--alert); }
+
+  .tag-bronze  { background: var(--bronze-bg);  color: var(--bronze);  border: 1px solid var(--bronze-border); }
+  .tag-silver  { background: var(--silver-bg);  color: var(--silver);  border: 1px solid var(--silver-border); }
+  .tag-gold    { background: var(--gold-bg);    color: var(--gold);    border: 1px solid var(--gold-border); }
+  .tag-event   { background: var(--event-bg);   color: var(--event);   border: 1px solid var(--event-border); }
+  .tag-app     { background: var(--green-bg);   color: var(--green);   border: 1px solid var(--green-border); }
+  .tag-infra   { background: var(--infra-bg);   color: var(--infra);   border: 1px solid var(--infra-border); }
+  .tag-gdpr    { background: var(--gdpr-bg);    color: var(--gdpr);    border: 1px solid var(--gdpr-border); }
+  .tag-alert   { background: var(--alert-bg);   color: var(--alert);   border: 1px solid var(--alert-border); }
+  .tag-quality { background: var(--quality-bg); color: var(--quality); border: 1px solid var(--quality-border); }
+  .tag-dim     { background: rgba(100,116,139,0.08); color: var(--text-muted); border: 1px solid rgba(100,116,139,0.18); }
+
+  .label-source { background: rgba(100,116,139,0.08); color: var(--text-muted); border: 1px solid rgba(100,116,139,0.18); }
+  .label-event  { background: var(--event-bg);   color: var(--event);   border: 1px solid var(--event-border); }
+  .label-bronze { background: var(--bronze-bg);  color: var(--bronze);  border: 1px solid var(--bronze-border); }
+  .label-silver { background: var(--silver-bg);  color: var(--silver);  border: 1px solid var(--silver-border); }
+  .label-gold   { background: var(--gold-bg);    color: var(--gold);    border: 1px solid var(--gold-border); }
+  .label-app    { background: var(--green-bg);   color: var(--green);   border: 1px solid var(--green-border); }
+  .label-infra  { background: var(--infra-bg);   color: var(--infra);   border: 1px solid var(--infra-border); }
+  .label-gdpr   { background: var(--gdpr-bg);    color: var(--gdpr);    border: 1px solid var(--gdpr-border); }
+
+  /* ─── DIVIDERS ────────────────────────────────────── */
+  .section-divider {
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, var(--border-mid) 20%, var(--border-mid) 80%, transparent);
+    align-self: stretch;
+    margin: 0 2px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .section-divider::after {
+    content: attr(data-label);
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  /* ─── NODE GROUPS ─────────────────────────────────── */
+  .node-group {
+    background: rgba(255,255,255,0.015);
+    border: 1px dashed var(--border-mid);
+    border-radius: var(--radius);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .node-group-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed rgba(255,255,255,0.04);
+  }
+
+  /* ─── FLOW ARROWS ─────────────────────────────────── */
+  .flow-arrows {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 6px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .flow-arrows .arrow { font-size: 12px; }
+
+  /* ─── TOOLTIP ─────────────────────────────────────── */
+  .tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a2438;
+    border: 1px solid var(--border-highlight);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.55;
+    width: 250px;
+    z-index: 200;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+    pointer-events: none;
+  }
+
+  .node:hover .tooltip { display: block; }
+
+  /* ─── SECTIONS ────────────────────────────────────── */
+  .section {
+    padding: 28px 40px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-section);
+  }
+
+  .section + .section {
+    background: var(--bg);
+  }
+
+  .section:nth-child(even) {
+    background: var(--bg-section);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .section-subtitle {
+    font-size: 13px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .cross-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 10px;
+  }
+
+  /* ─── TABLES ──────────────────────────────────────── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+  }
+
+  .data-table thead tr {
+    border-bottom: 1px solid var(--border-highlight);
+  }
+
+  .data-table th {
+    text-align: left;
+    padding: 11px 14px;
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+  }
+
+  .data-table th:last-child { text-align: right; }
+
+  .data-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background var(--transition);
+  }
+
+  .data-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+  .data-table td {
+    padding: 13px 14px;
+    color: var(--text);
+    vertical-align: top;
+  }
+
+  .data-table td:last-child {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .data-table .td-muted { color: var(--text-muted); }
+  .data-table .td-source { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+  .data-table tfoot tr { border-top: 2px solid var(--border-highlight); }
+
+  .data-table tfoot td {
+    padding: 13px 14px;
+    font-weight: 700;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .table-note {
+    margin-top: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  /* ─── MISC ────────────────────────────────────────── */
+  .dashed-border {
+    border-style: dashed !important;
+    opacity: 0.65;
+  }
+
+  .mt-lg { margin-top: 20px; }
+  .mt-md { margin-top: 12px; }
+
+  .grad-green {
+    background: linear-gradient(135deg, #10b981, #06b6d4);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .grad-red {
+    background: linear-gradient(135deg, #ef4444, #f59e0b);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* ─── FOOTER ──────────────────────────────────────── */
+  .footer {
+    padding: 16px 40px 28px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-section);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.8;
+  }
+
+  /* ─── ANIMATIONS ──────────────────────────────────── */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.45; }
+  }
+  .pulse { animation: pulse 2.2s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <h1>Data Platform Architecture</h1>
+    <p>Hetzner &middot; Medallion Architecture &middot; Multi-Tenant &middot; EU Self-Hosted</p>
+  </div>
+  <div class="header-badge">&#9679; GDPR COMPLIANT</div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--text-muted)"></div>Sources</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--event)"></div>Event Stream</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--bronze)"></div>Bronze</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--silver)"></div>Silver</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Gold</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Applications</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--infra)"></div>Infrastructure</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--gdpr)"></div>GDPR / Security</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--alert)"></div>Alerting</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--quality)"></div>Data Quality</div>
+  <div class="legend-sep"></div>
+  <div class="legend-item" style="color:var(--text-dim); font-size:10px;">- - - Dashed = Planned</div>
+</div>
+
+<!-- ARCHITECTURE CANVAS -->
+<div class="canvas">
+  <div class="layers">
+
+    <!-- SOURCES -->
+    <div class="layer" style="min-width:185px">
+      <div class="layer-label label-source">Sources</div>
+
+      <div class="node node-source">
+        <div class="node-title">Simplisan ERP</div>
+        <div class="node-desc">Primary data source. Crawler extracts patient, business &amp; tenant data.</div>
+        <div class="node-tag tag-infra">BATCH &middot; HOURLY</div>
+      </div>
+
+      <div class="node node-source dashed-border">
+        <div class="node-title">Simplisan API</div>
+        <div class="node-desc">Future: REST API integration replacing Crawler for direct data fetch.</div>
+        <div class="node-tag tag-dim">PLANNED</div>
+      </div>
+
+      <div class="node node-source">
+        <div class="node-title">Crawler</div>
+        <div class="node-desc">Extracts data from Simplisan, runs on schedule via Dagster.</div>
+        <div class="node-tag tag-infra">DAGSTER MANAGED</div>
+      </div>
+
+      <div class="node node-app mt-lg">
+        <div class="node-title">patients_application</div>
+        <div class="node-desc">Multi-tenant patient portal with subdomain per tenant (e.g., praxis-mueller.app.com). Emits events on address change, appointment booking.</div>
+        <div class="node-tag tag-event">SUBDOMAIN &middot; EVENT SOURCE</div>
+      </div>
+    </div>
+
+    <div class="section-divider" data-label="ingest"></div>
+
+    <!-- INGESTION -->
+    <div class="layer" style="min-width:205px">
+      <div class="layer-label label-event">Ingestion</div>
+
+      <div class="node node-infra">
+        <div class="node-title">Hetzner AX52 &times;3</div>
+        <div class="node-desc">#1: Dagster, dbt, Crawler. #2: Redpanda, MinIO. #3: PostHog (ClickHouse + Kafka). All in Germany, GDPR compliant.</div>
+        <div class="node-tag tag-infra">EU &middot; GDPR &middot; &euro;225/mo</div>
+      </div>
+
+      <div class="node node-event">
+        <div class="node-title">Redpanda</div>
+        <div class="node-desc">Kafka-compatible event streaming. Handles patient events in real-time. Includes Schema Registry.</div>
+        <div class="node-tag tag-event">NEAR REAL-TIME</div>
+        <div class="tooltip">
+          <strong>Why Redpanda?</strong><br>
+          Simpler than Kafka, single binary, built-in Schema Registry, lower ops overhead for small teams.
+        </div>
+      </div>
+
+      <div class="node node-event">
+        <div class="node-title">Schema Registry</div>
+        <div class="node-desc">Validates event schemas (Avro/JSON). Rejects unknown schemas to dead-letter topic.</div>
+        <div class="node-tag tag-event">BUILT INTO REDPANDA</div>
+      </div>
+
+      <div class="node node-alert">
+        <div class="node-title">Dead Letter Topic</div>
+        <div class="node-desc">Failed/rejected events land here. Alerts fire immediately via Grafana.</div>
+        <div class="node-tag tag-alert">AUTO-ALERT</div>
+      </div>
+
+      <div class="node node-quality mt-md">
+        <div class="node-title">Schema Diff (Crawler)</div>
+        <div class="node-desc">Compares incoming Simplisan schema vs last known. Additive &rarr; auto-accept + log. Breaking &rarr; halt + alert.</div>
+        <div class="node-tag tag-alert">DAGSTER SENSOR</div>
+        <div class="tooltip">
+          <strong>Schema change handling:</strong><br>
+          &#x2022; New column &rarr; auto-accept, alert<br>
+          &#x2022; Rename/delete &rarr; halt pipeline<br>
+          &#x2022; Requires manual approval to proceed
+        </div>
+      </div>
+    </div>
+
+    <div class="section-divider" data-label="store"></div>
+
+    <!-- BRONZE -->
+    <div class="layer" style="min-width:195px">
+      <div class="layer-label label-bronze">Bronze (Raw)</div>
+
+      <div class="node node-bronze">
+        <div class="node-title">MinIO (S3-compat)</div>
+        <div class="node-desc">Object storage on Hetzner. Stores raw data as Apache Iceberg tables (Parquet).</div>
+        <div class="node-tag tag-bronze">ICEBERG &middot; SCHEMA-ON-READ</div>
+        <div class="tooltip">
+          <strong>Why Iceberg?</strong><br>
+          Native schema evolution — add, rename, drop columns without breaking readers. Time-travel for audits.
+        </div>
+      </div>
+
+      <div class="node node-bronze">
+        <div class="node-title">bronz_data</div>
+        <div class="node-desc">All raw data lands here: Crawler batch + Redpanda events. Append-only, immutable. tenant_id column on every record.</div>
+        <div class="node-tag tag-bronze">APPEND-ONLY</div>
+      </div>
+
+      <div class="node node-gdpr mt-md">
+        <div class="node-title">PII Tagging</div>
+        <div class="node-desc">Columns containing PII are tagged at bronze level. Feeds GDPR deletion pipeline.</div>
+        <div class="node-tag tag-gdpr">GDPR</div>
+      </div>
+
+      <div class="flow-arrows">
+        <span>bronz</span>
+        <span class="arrow">→</span>
+        <span style="color:var(--quality)">quality gate</span>
+        <span class="arrow">→</span>
+        <span>silver</span>
+      </div>
+
+      <div class="node node-quality">
+        <div class="node-title">dbt Tests + Soda</div>
+        <div class="node-desc">Schema contracts, null checks, referential integrity, row count anomalies. Fails loudly on violations.</div>
+        <div class="node-tag tag-alert">GATE: BRONZ→SILVER</div>
+      </div>
+    </div>
+
+    <div class="section-divider" data-label="transform"></div>
+
+    <!-- SILVER -->
+    <div class="layer" style="min-width:195px">
+      <div class="layer-label label-silver">Silver (Clean)</div>
+
+      <div class="node node-silver">
+        <div class="node-title">silver_app</div>
+        <div class="node-desc">Cleaned patient &amp; business data. Deduped, type-cast, normalized. dbt models with contracts enforced.</div>
+        <div class="node-tag tag-silver">DBT CONTRACTS</div>
+      </div>
+
+      <div class="node node-silver">
+        <div class="node-title">silver_bi</div>
+        <div class="node-desc">BI-oriented transforms. Aggregations, joins, pre-computed metrics for analytics.</div>
+        <div class="node-tag tag-silver">DBT CONTRACTS</div>
+      </div>
+
+      <div class="node node-gdpr mt-md">
+        <div class="node-title">Pseudonymization</div>
+        <div class="node-desc">PII fields hashed/masked in silver. Reversible only with key stored in Vault.</div>
+        <div class="node-tag tag-gdpr">GDPR &middot; SILVER</div>
+      </div>
+
+      <div class="flow-arrows">
+        <span>silver</span>
+        <span class="arrow">→</span>
+        <span style="color:var(--quality)">quality gate</span>
+        <span class="arrow">→</span>
+        <span>gold</span>
+      </div>
+
+      <div class="node node-quality">
+        <div class="node-title">dbt Tests + Soda</div>
+        <div class="node-desc">Business logic validation, cross-table consistency, tenant data isolation checks.</div>
+        <div class="node-tag tag-alert">GATE: SILVER→GOLD</div>
+      </div>
+    </div>
+
+    <div class="section-divider" data-label="serve"></div>
+
+    <!-- GOLD -->
+    <div class="layer" style="min-width:205px">
+      <div class="layer-label label-gold">Gold (Business)</div>
+
+      <div class="node node-gold">
+        <div class="node-title">Postgres (Ubicloud Managed)</div>
+        <div class="node-desc">Ubicloud on Hetzner Germany. Gold tables served to applications. Schema-per-tenant isolation. Automated backups, PITR, encryption at rest.</div>
+        <div class="node-tag tag-gold">TENANT ISOLATED &middot; MANAGED</div>
+      </div>
+
+      <div class="node-group">
+        <div class="node-group-label">App-Serving Gold</div>
+        <div class="node node-gold">
+          <div class="node-title">gold_app_patients</div>
+          <div class="node-desc">Patient records, appointments, addresses. Read-only views per tenant schema.</div>
+          <div class="node-tag tag-gold">READ ONLY</div>
+        </div>
+        <div class="node node-gold">
+          <div class="node-title">gold_app_business</div>
+          <div class="node-desc">Business/practice data per tenant.</div>
+          <div class="node-tag tag-gold">READ ONLY</div>
+        </div>
+      </div>
+
+      <div class="node-group">
+        <div class="node-group-label">BI-Serving Gold</div>
+        <div class="node node-gold">
+          <div class="node-title">gold_bi_tennent</div>
+          <div class="node-desc">Tenant-level BI metrics and KPIs.</div>
+          <div class="node-tag tag-gold">READ ONLY</div>
+        </div>
+        <div class="node node-gold">
+          <div class="node-title">gold_bi_market</div>
+          <div class="node-desc">Cross-tenant market analytics (anonymized).</div>
+          <div class="node-tag tag-gold">READ ONLY &middot; ANON</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-divider" data-label="consume"></div>
+
+    <!-- APPLICATIONS -->
+    <div class="layer" style="min-width:205px">
+      <div class="layer-label label-app">Applications</div>
+
+      <div class="node node-app">
+        <div class="node-title">patients_application</div>
+        <div class="node-desc">Shared app, subdomain per tenant (e.g., praxis-mueller.app.com). Filters by tenant_id internally. Emits events to Redpanda on address change / appointment booking.</div>
+        <div class="node-tag tag-event">SUBDOMAIN &middot; MULTI-TENANT &middot; EVENTS</div>
+      </div>
+
+      <div class="node node-app">
+        <div class="node-title">tennent_business_application</div>
+        <div class="node-desc">Tenant admin/business dashboard. Reads from gold_app_business.</div>
+        <div class="node-tag tag-app">READ ONLY</div>
+      </div>
+
+      <div class="node node-app">
+        <div class="node-title">tennent_bi_application</div>
+        <div class="node-desc">Tenant BI dashboard. Reads from gold_bi_tennent.</div>
+        <div class="node-tag tag-app">READ ONLY</div>
+      </div>
+
+      <div class="node node-app">
+        <div class="node-title">market_bi_application</div>
+        <div class="node-desc">Market analytics. Reads anonymized cross-tenant data from gold_bi_market.</div>
+        <div class="node-tag tag-app">READ ONLY &middot; ANON</div>
+      </div>
+
+      <div class="node node-infra mt-lg">
+        <div class="node-title">PostHog (Self-Hosted)</div>
+        <div class="node-desc">Dedicated Hetzner AX52. Runs ClickHouse + Kafka + Postgres internally. Tracks tenant-level feature adoption and patient-level behavior (anonymized). All events tagged with tenant_id.</div>
+        <div class="node-tag tag-gdpr">SELF-HOSTED &middot; GDPR &middot; AX52 #3</div>
+        <div class="tooltip">
+          <strong>Why self-hosted?</strong><br>
+          PostHog Cloud sends data to US servers. Patient behavior data under GDPR must stay in EU. Self-hosting on Hetzner Germany = full control.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- CROSS-CUTTING -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">Cross-Cutting Infrastructure</div>
+  </div>
+  <div class="cross-grid">
+    <div class="node node-infra">
+      <div class="node-title">Dagster (Orchestrator)</div>
+      <div class="node-desc">Manages all pipelines: Crawler schedule, dbt runs, quality gates, schema diff sensors. Native dbt integration. Asset lineage shows blast radius of schema changes.</div>
+      <div class="node-tag tag-infra">ORCHESTRATION</div>
+    </div>
+    <div class="node node-infra">
+      <div class="node-title">Grafana + Alertmanager</div>
+      <div class="node-desc">Monitoring dashboards. Alerts on: pipeline failures, schema changes, quality gate failures, dead-letter events, SLA breaches.</div>
+      <div class="node-tag tag-alert">MONITORING</div>
+    </div>
+    <div class="node node-gdpr">
+      <div class="node-title">GDPR Deletion Pipeline</div>
+      <div class="node-desc">Tenant/patient deletion requests. Traverses all layers (bronze &rarr; silver &rarr; gold) using PII tags. Dagster-orchestrated. Audit log retained.</div>
+      <div class="node-tag tag-gdpr">RIGHT TO ERASURE</div>
+    </div>
+    <div class="node node-gdpr">
+      <div class="node-title">Tenant Isolation</div>
+      <div class="node-desc">Bronze/Silver: tenant_id column + row-level security. Gold: schema-per-tenant in Postgres. Verified by cross-cutting dbt tests.</div>
+      <div class="node-tag tag-gdpr">ACCESS CONTROL</div>
+    </div>
+    <div class="node node-infra">
+      <div class="node-title">DataHub / OpenLineage</div>
+      <div class="node-desc">Data catalog and lineage tracking. Trace any record from Simplisan &rarr; bronze &rarr; silver &rarr; gold &rarr; application.</div>
+      <div class="node-tag tag-infra">LINEAGE</div>
+    </div>
+    <div class="node node-infra">
+      <div class="node-title">dbt (Transformations)</div>
+      <div class="node-desc">All bronze&rarr;silver&rarr;gold transforms. Column-level contracts enforced. If Simplisan renames/deletes a column, dbt fails loudly — never silently passes NULLs.</div>
+      <div class="node-tag tag-quality">SCHEMA CONTRACTS</div>
+    </div>
+  </div>
+</div>
+
+<!-- DATA FLOW -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">Data Flow Paths</div>
+  </div>
+  <div class="cross-grid">
+    <div class="node node-source">
+      <div class="node-title">Batch Path (Hourly)</div>
+      <div class="node-desc" style="line-height:1.75">
+        Simplisan &rarr; Crawler &rarr; <span style="color:var(--quality)">Schema Diff</span> &rarr; bronz_data &rarr; <span style="color:var(--quality)">Quality Gate</span> &rarr; silver_app / silver_bi &rarr; <span style="color:var(--quality)">Quality Gate</span> &rarr; gold_* &rarr; Applications
+      </div>
+      <div class="node-tag tag-infra">DAGSTER SCHEDULED</div>
+    </div>
+    <div class="node node-event">
+      <div class="node-title">Event Path (Real-Time)</div>
+      <div class="node-desc" style="line-height:1.75">
+        patients_application &rarr; Redpanda &rarr; <span style="color:var(--quality)">Schema Registry validates</span> &rarr; bronz_data &rarr; <span style="color:var(--quality)">Quality Gate</span> &rarr; silver_app &rarr; <span style="color:var(--quality)">Quality Gate</span> &rarr; gold_app_patients &rarr; patients_application
+      </div>
+      <div class="node-tag tag-event">REDPANDA STREAMED</div>
+    </div>
+    <div class="node node-alert">
+      <div class="node-title">Failure Path</div>
+      <div class="node-desc" style="line-height:1.75">
+        Schema violation &rarr; Dead Letter Topic / Pipeline Halt &rarr; Grafana Alert &rarr; Team notification (Slack/Email) &rarr; Manual review &rarr; Approve or fix &rarr; Resume
+      </div>
+      <div class="node-tag tag-alert">NEVER SILENT</div>
+    </div>
+    <div class="node node-gdpr">
+      <div class="node-title">GDPR Deletion Path</div>
+      <div class="node-desc" style="line-height:1.75">
+        Deletion request &rarr; Dagster triggers traversal &rarr; PII-tagged columns in bronze (Iceberg delete) &rarr; silver (recompute) &rarr; gold (cascade) &rarr; Audit log
+      </div>
+      <div class="node-tag tag-gdpr">RIGHT TO ERASURE</div>
+    </div>
+  </div>
+</div>
+
+<!-- COST BREAKDOWN -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">Monthly Cost Breakdown</div>
+    <div class="section-subtitle">~&euro;440&ndash;510/mo total</div>
+  </div>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 28px;">
+
+    <div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>Service</th>
+            <th>Cost/mo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>AX52 #1 &mdash; Compute</td>
+            <td class="td-muted">Dagster, dbt, Crawler</td>
+            <td style="color:var(--infra)">&euro;75</td>
+          </tr>
+          <tr>
+            <td>AX52 #2 &mdash; Streaming + Storage</td>
+            <td class="td-muted">Redpanda, MinIO</td>
+            <td style="color:var(--infra)">&euro;75</td>
+          </tr>
+          <tr>
+            <td>AX52 #3 &mdash; Analytics</td>
+            <td class="td-muted">PostHog self-hosted (ClickHouse, Kafka, PG)</td>
+            <td style="color:var(--infra)">&euro;75</td>
+          </tr>
+          <tr>
+            <td>Object Storage (3 TB)</td>
+            <td class="td-muted">Hetzner Object Storage (Bronze/Silver)</td>
+            <td style="color:var(--bronze)">&euro;25</td>
+          </tr>
+          <tr>
+            <td>Managed Postgres</td>
+            <td class="td-muted">Ubicloud on Hetzner (Gold layer)</td>
+            <td style="color:var(--gold)">&euro;80&ndash;150</td>
+          </tr>
+          <tr>
+            <td>All Software</td>
+            <td class="td-muted">Dagster, dbt, Redpanda, Iceberg, Grafana, Soda, PostHog</td>
+            <td style="color:var(--green)">&euro;0</td>
+          </tr>
+          <tr>
+            <td>DNS + Misc</td>
+            <td class="td-muted">Domain, wildcard SSL (*.app.com), misc</td>
+            <td class="td-muted">&euro;10</td>
+          </tr>
+          <tr>
+            <td>Claude AI</td>
+            <td class="td-muted">Claude Pro &mdash; &euro;100/mo plan (AI-assisted dev &amp; ops)</td>
+            <td style="color:var(--event)">&euro;100</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" style="color:var(--text); font-weight:700;">Total Monthly Cost</td>
+            <td class="grad-green" style="font-size:15px;">&euro;440&ndash;510</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div class="node node-infra" style="border-left-color:var(--green)">
+        <div class="node-title" style="color:var(--green)">AWS Equivalent: &euro;2,000&ndash;4,000/mo</div>
+        <div class="node-desc">RDS Postgres (~&euro;400), MSK/Kafka (~&euro;500), EC2 &times;3 (~&euro;450), S3 + transfer (~&euro;200), managed Airflow (~&euro;300+), PostHog Cloud (~&euro;450). You're saving 5&ndash;10x.</div>
+        <div class="node-tag tag-app">5&ndash;10x SAVINGS</div>
+      </div>
+      <div class="node node-infra">
+        <div class="node-title">Scaling Milestones</div>
+        <div class="node-desc">
+          &bull; 5+ TB data &rarr; add 4th AX52 (+&euro;75/mo)<br>
+          &bull; Heavy Postgres load &rarr; upgrade Ubicloud tier (+&euro;50&ndash;100)<br>
+          &bull; Want managed streaming &rarr; Redpanda Cloud (+&euro;100&ndash;200)<br>
+          &bull; DataHub lineage server &rarr; small VM (+&euro;10&ndash;15)
+        </div>
+        <div class="node-tag tag-infra">GROWTH PATH</div>
+      </div>
+      <div class="node" style="border-left:2px solid var(--text-dim); background:rgba(255,255,255,0.015);">
+        <div class="node-title" style="color:var(--text-muted)">All prices excl. 19% German VAT</div>
+        <div class="node-desc">Post-April 2026 Hetzner pricing. Hetzner Object Storage at &euro;6.49 base + pay-as-you-go. Ubicloud Postgres on Hetzner Germany region.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TEAM -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">Hypothetical: What If You Had to Hire This Team in Germany?</div>
+  </div>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 28px;">
+
+    <div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th style="text-align:right">Gross Salary/yr<br><span style="font-weight:400; text-transform:none; letter-spacing:0">(incl. employer contrib.)</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              Head of Product
+              <div class="td-source">Glassdoor DE, 251 submissions &mdash; Jan 2026</div>
+            </td>
+            <td class="td-muted">&euro;88k&ndash;140k</td>
+          </tr>
+          <tr>
+            <td>
+              Senior Fullstack Engineer
+              <div class="td-source">Glassdoor DE + Levels.fyi DE &mdash; 2025/26</div>
+            </td>
+            <td class="td-muted">&euro;62k&ndash;95k</td>
+          </tr>
+          <tr>
+            <td>
+              Senior Data / Cloud Engineer
+              <div class="td-source">TechPays EU + Glassdoor DE &mdash; 2025/26 &middot; +20&ndash;40% for modern stack (dbt, Dagster)</div>
+            </td>
+            <td class="td-muted">&euro;68k&ndash;100k</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td style="color:var(--text); font-weight:700;">3-person team total</td>
+            <td class="grad-red" style="font-size:15px;">&euro;218k&ndash;335k/yr</td>
+          </tr>
+        </tfoot>
+      </table>
+      <div class="table-note">
+        Gross salary = full cost to employer, incl. employer social contributions (~21%).<br>
+        Sources: Glassdoor.de &middot; Levels.fyi/Germany &middot; TechPays.com/europe/germany
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div class="node node-infra" style="border-left-color:var(--green)">
+        <div class="node-title" style="color:var(--green)">For context</div>
+        <div class="node-desc" style="line-height:1.7">
+          Hiring this team at market rate in Germany runs
+          <strong style="color:var(--text)">&euro;218k&ndash;335k/yr</strong> —
+          roughly <strong style="color:var(--text)">&euro;18k&ndash;28k/mo</strong> in payroll alone.
+          The full infra stack is <strong style="color:var(--infra)">&euro;440&ndash;510/mo</strong>.
+        </div>
+        <div class="node-tag tag-app">MARKET REFERENCE</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div style="margin-top: 0; padding-top: 0; border-top: none; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <span style="font-size: 13px; color: var(--text-muted); font-weight: 500;">Designed &amp; Architected with</span>
+      <span style="font-size: 14px; color: var(--alert); margin: 0 5px;">&#9829;</span>
+      <span style="font-size: 13px; color: var(--text-muted); font-weight: 500;">by</span>
+      <span style="font-size: 13px; color: var(--text); font-weight: 600; margin-left: 6px; font-family: 'JetBrains Mono', monospace;">Lokesh Upputri &amp; Team</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div style="width: 6px; height: 6px; border-radius: 50%; background: var(--green);" class="pulse"></div>
+      <span style="font-size: 11px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase;">LU Equity &middot; 2026</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
